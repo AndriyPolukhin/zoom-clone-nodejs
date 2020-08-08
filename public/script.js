@@ -34,6 +34,25 @@ navigator.mediaDevices
     socket.on('user-connected', (userId) => {
       connectToNewUser(userId, stream);
     });
+
+    // * Get the messages
+    let text = $('input');
+
+    $('html').keydown((e) => {
+      if (e.which == 13 && text.val().length !== 0) {
+        console.log(text.val());
+        socket.emit('message', text.val());
+        text.val('');
+      }
+    });
+
+    socket.on('createMessage', (message) => {
+      console.log(`Message from the server: ${message}`);
+      $('.messages').append(
+        `<li class="message"><b>user</b><br />${message}</li>`
+      );
+      scrollToBottom();
+    });
   })
   .catch((error) => console.log(error.message));
 
@@ -61,4 +80,67 @@ const addVideoStream = (video, stream) => {
     video.play();
   });
   videoGrid.append(video);
+};
+
+// * Chat: Scroll to Bottom @fn. Will scroll in the chat div, so the messages would not exceed the page height!!!
+const scrollToBottom = () => {
+  let d = $('.main__chat__window');
+  d.scrollTop(d.prop('scrollHeight'));
+};
+
+// * Mute our video and change the icon
+const muteUnmute = () => {
+  const enabled = myVideoStream.getAudioTracks()[0].enabled;
+  if (enabled) {
+    myVideoStream.getAudioTracks()[0].enabled = false;
+    setUnmuteButton();
+  } else {
+    setMuteButton();
+    myVideoStream.getAudioTracks()[0].enabled = true;
+  }
+};
+
+const setMuteButton = () => {
+  const html = `
+  <i class="fas fa-microphone"></i>
+  <span>Mute</span>
+  `;
+  document.querySelector('.main__mute__button').innerHTML = html;
+};
+
+const setUnmuteButton = () => {
+  const html = `
+    <i class="unmute fas fa-microphone-slash"></i>
+    <span>Unmute</span>
+  `;
+  document.querySelector('.main__mute__button').innerHTML = html;
+};
+
+// * Stop/Play Video and change the icon
+const playStop = () => {
+  let enabled = myVideoStream.getVideoTracks()[0].enabled;
+  if (enabled) {
+    myVideoStream.getVideoTracks()[0].enabled = false;
+    setPlayVideo();
+  } else {
+    setStopVideo();
+    myVideoStream.getVideoTracks()[0].enabled = true;
+  }
+};
+
+const setStopVideo = () => {
+  const html = `
+    <i class="fas fa-video"></i>
+    <span>Stop Video</span>
+  `;
+  document.querySelector('.main__video__button').innerHTML = html;
+};
+
+const setPlayVideo = () => {
+  const html = `
+    <i class="stop fas fa-video-slash"></i>
+    <span>Play Video</span>
+  `;
+
+  document.querySelector('.main__video__button').innerHTML = html;
 };
