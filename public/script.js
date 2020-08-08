@@ -6,7 +6,7 @@ const myVideo = document.createElement('video');
 myVideo.muted = true;
 
 // * Set up peer options
-let peer = new Peer(undefined, {
+const peer = new Peer(undefined, {
   path: '/peerjs',
   host: '/',
   port: '443',
@@ -14,6 +14,7 @@ let peer = new Peer(undefined, {
 
 // * Access to the video and audio
 let myVideoStream;
+const peers = {};
 navigator.mediaDevices
   .getUserMedia({
     video: true,
@@ -56,6 +57,12 @@ navigator.mediaDevices
   })
   .catch((error) => console.log(error.message));
 
+// * User disconnected
+socket.on('user-disconnected', (userId) => {
+  if (peers[userId]) peers[userId].close();
+  console.log(`User Disconnected: `, { userId });
+});
+
 //   * Join the room
 peer.on('open', (id) => {
   console.log({ id });
@@ -64,13 +71,18 @@ peer.on('open', (id) => {
 
 // * Connect to new user
 const connectToNewUser = (userId, stream) => {
-  console.log({ userId });
+  console.log(`User Connected: `, { userId });
   // * Connect to the user
   const call = peer.call(userId, stream);
   const video = document.createElement('video');
   call.on('stream', (userVideoStream) => {
     addVideoStream(video, userVideoStream);
   });
+  call.on('close', () => {
+    video.remove();
+  });
+
+  peers[userId] = call;
 };
 
 // * Create a @fn to add the video to the stream
